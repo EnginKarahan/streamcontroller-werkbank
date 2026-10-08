@@ -1,0 +1,9 @@
+# Secrets and personal configuration never belong here
+.env
+*.env
+*.local.*
+config/
+privat/
+
+__pycache__/
+*.pyc
