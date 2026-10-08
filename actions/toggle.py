@@ -22,6 +22,7 @@ class GuardedToggle(WerkbankAction):
         Field("off_text", "Text while stopped", default=""),
         Field("interval", "Check every (s)", kind="spin", default=5, rng=(1, 600, 1)),
     ]
+    DEFAULT_ICON = "media-record"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -30,9 +31,11 @@ class GuardedToggle(WerkbankAction):
         self._checking = threading.Lock()
 
     def on_ready(self):
+        super().on_ready()
         self.check()
 
     def on_tick(self):
+        super().on_tick()
         self._ticks += 1
         if self._ticks >= int(self.setting("interval") or 5):
             self._ticks = 0
@@ -60,9 +63,10 @@ class GuardedToggle(WerkbankAction):
             try:
                 rc = self.shell(self.setting("status"), wait=True, timeout=15)
                 self._running = rc == 0
-                self.set_background_color(RED if self._running else (GREY if rc is None else NONE))
-                self.set_center_label(self.setting("on_text" if self._running else "off_text"),
-                                      font_size=14)
+                self.ui(self.set_background_color,
+                        RED if self._running else (GREY if rc is None else NONE))
+                self.ui(self.set_center_label,
+                        self.setting("on_text" if self._running else "off_text"), font_size=14)
             finally:
                 self._checking.release()
         threading.Thread(target=run, daemon=True, name="werkbank-status").start()

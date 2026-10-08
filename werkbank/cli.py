@@ -44,6 +44,13 @@ def cmd_desktop(args) -> int:
     return 0 if hit else 1
 
 
+def cmd_icon(args) -> int:
+    from . import icons
+    path = icons.render(args.spec, size=args.size)
+    _out(ok=bool(path), path=str(path) if path else None)
+    return 0 if path else 1
+
+
 def cmd_claude(args) -> int:
     from . import claude
     if args.action == "open":
@@ -102,6 +109,11 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("desktop", help="switch to virtual desktop N (1-based)")
     s.add_argument("number", type=int)
     s.set_defaults(func=cmd_desktop)
+
+    s = sub.add_parser("icon", help="render an app's icon (app id, icon name or path) as PNG")
+    s.add_argument("spec")
+    s.add_argument("--size", type=int, default=256)
+    s.set_defaults(func=cmd_icon)
 
     s = sub.add_parser("claude", help="one key per Claude Code session in kitty")
     csub = s.add_subparsers(dest="action", required=True)

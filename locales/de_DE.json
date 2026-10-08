@@ -6,18 +6,15 @@
     "actions.NewNote.name": "Neue Notiz aus Vorlage",
     "actions.HoldCommand.name": "Halten: Befehl bei Drücken / Loslassen",
     "actions.GuardedToggle.name": "Geschützter Start/Stopp (Aufnahme)",
-
     "field.cls": "Fensterklasse (Regex)",
     "field.cls.hint": "z. B. ^org.telegram.desktop$ – siehe: werkbank-cli windows",
     "field.caption": "Fenstertitel (Regex, optional)",
     "field.launch": "Startbefehl, falls nicht offen",
     "field.launch.hint": "z. B. flatpak run org.telegram.desktop",
-
     "field.name": "Sitzungsname",
     "field.name.hint": "zugleich die Identität der Taste – nicht mehr ändern",
     "field.directory": "Ordner",
     "field.directory.hint": "Arbeitsordner, z. B. ~/Projekte/website",
-
     "field.url": "Aktions-URL (bei Druck)",
     "field.method": "Methode",
     "field.body": "JSON-Body (optional)",
@@ -32,7 +29,6 @@
     "field.show.hint": "z. B. {elapsed_minutes|hm} – {} ist die ganze Antwort",
     "field.match": "Hervorheben, wenn Text passt (Regex)",
     "field.interval": "Aktualisieren alle (s)",
-
     "field.template": "Vorlage",
     "field.template.hint": "Markdown mit Front Matter, z. B. ~/Notizen/Vorlagen/zettel.md",
     "field.pattern": "Dateiname",
@@ -40,15 +36,15 @@
     "field.ask": "Nach Titel fragen (Text)",
     "field.ask.hint": "leer lassen für Notizen ohne Titel, z. B. Tagebuch",
     "field.editor": "Öffnen mit",
-
     "field.down": "Befehl bei Drücken",
     "field.up": "Befehl bei Loslassen",
-
     "field.status": "Statusbefehl",
     "field.status.hint": "Exit-Code 0 bedeutet: läuft",
     "field.start": "Startbefehl",
     "field.stop": "Stoppbefehl",
     "field.stop.hint": "nur bei langem Druck",
     "field.on_text": "Text, solange es läuft",
-    "field.off_text": "Text im Ruhezustand"
+    "field.off_text": "Text im Ruhezustand",
+    "field.icon": "Icon (App-ID, Icon-Name oder Datei)",
+    "field.icon.hint": "aus deinem Icon-Theme, z. B. org.telegram.desktop oder media-record"
 }

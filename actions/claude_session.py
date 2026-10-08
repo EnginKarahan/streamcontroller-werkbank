@@ -8,10 +8,12 @@ class ClaudeSession(WerkbankAction):
         Field("name", "Session name", subtitle="also the key's identity — keep it stable"),
         Field("directory", "Folder", subtitle="where the session runs, e.g. ~/projects/website"),
     ]
+    DEFAULT_ICON = "kitty"
 
     def on_ready(self):
+        super().on_ready()
         if self.setting("name"):
-            self.set_bottom_label(self.setting("name"), font_size=11)
+            self.set_bottom_label(self.setting("name"))
 
     def on_settings_changed(self):
         self.on_ready()

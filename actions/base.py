@@ -7,10 +7,12 @@ the user's programs are out of reach; flatpak-spawn --host bridges that.
 
 from __future__ import annotations
 
+import collections
 import json
 import os
 import subprocess
 import threading
+import time
 
 from loguru import logger as log
 
@@ -21,6 +23,8 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gtk  # noqa: E402
+
+from werkbank.icons import cached_path  # noqa: E402
 
 IN_FLATPAK = os.path.exists("/.flatpak-info")
 GREEN = [46, 160, 67, 255]
@@ -37,6 +41,24 @@ def host(argv: list[str]) -> list[str]:
     return argv
 
 
+# Each flatpak-spawn opens its own D-Bus connection; when a page loads, every
+# key resolves its icon and status at once and the sandbox's D-Bus proxy
+# starts refusing ("Can't find bus: ... temporarily unavailable"). So: few
+# host calls at a time, and a short retry for the refusals that still occur.
+HOST_SLOTS = threading.BoundedSemaphore(4)
+BUS_BUSY = "Can't find bus"
+
+
+def run_host(argv: list[str], timeout: float) -> subprocess.CompletedProcess:
+    for attempt in range(4):
+        with HOST_SLOTS:
+            proc = subprocess.run(host(argv), capture_output=True, text=True, timeout=timeout)
+        if not (IN_FLATPAK and proc.returncode != 0 and BUS_BUSY in proc.stderr):
+            return proc
+        time.sleep(0.2 * (attempt + 1))
+    return proc
+
+
 class Field:
     """One setting with its config row. kind: entry | switch | spin."""
 
@@ -45,25 +67,37 @@ class Field:
         self.default, self.subtitle, self.rng = default, subtitle, rng
 
 
+ICON = Field("icon", "Icon (app id, icon name or file)",
+             subtitle="from your icon theme, e.g. org.telegram.desktop or media-record")
+
+
 class WerkbankAction(ActionBase):
     FIELDS: list[Field] = []
+    DEFAULT_ICON = ""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.has_configuration = True
         self._busy = threading.Lock()
+        self._pending = collections.deque()
 
     # -- settings ---------------------------------------------------------
     def setting(self, key):
         default = next((f.default for f in self.FIELDS if f.key == key), "")
         return self.get_settings().get(key, default)
 
+    def default_icon(self) -> str:
+        return self.DEFAULT_ICON
+
+    def on_ready(self):
+        self.show_app_icon(self.setting("icon") or self.default_icon())
+
     def t(self, key: str, fallback: str) -> str:
         return self.plugin_base.locale_manager.get(key, fallback)
 
     def get_config_rows(self):
         rows = []
-        for f in self.FIELDS:
+        for f in [*self.FIELDS, ICON]:
             title = self.t(f"field.{f.key}", f.title)
             value = self.setting(f.key)
             if f.kind == "switch":
@@ -91,15 +125,14 @@ class WerkbankAction(ActionBase):
         self.on_settings_changed()
 
     def on_settings_changed(self):
-        pass
+        self.show_app_icon(self.setting("icon") or self.default_icon())
 
     # -- running things on the host ----------------------------------------
     def core(self, *args: str, timeout: float = 30) -> dict:
         """Run werkbank-cli on the host and return its JSON answer."""
         cli = os.path.join(self.plugin_base.PATH, "werkbank-cli")
         try:
-            proc = subprocess.run(host(["python3", cli, *args]), capture_output=True,
-                                  text=True, timeout=timeout)
+            proc = run_host(["python3", cli, *args], timeout)
         except subprocess.TimeoutExpired:
             log.error(f"Werkbank: werkbank-cli {args[0]} timed out")
             return {"ok": False, "error": "timeout"}
@@ -115,13 +148,12 @@ class WerkbankAction(ActionBase):
         """Run a shell command on the host in a login shell (user's PATH)."""
         if not command.strip():
             return None
-        argv = host(["sh", "-lc", command])
         if not wait:
-            subprocess.Popen(argv, start_new_session=True, stdin=subprocess.DEVNULL,
+            subprocess.Popen(host(["sh", "-lc", command]), start_new_session=True, stdin=subprocess.DEVNULL,
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             return None
         try:
-            return subprocess.run(argv, capture_output=True, timeout=timeout).returncode
+            return run_host(["sh", "-lc", command], timeout).returncode
         except subprocess.TimeoutExpired:
             log.error(f"Werkbank: command timed out: {command}")
             return None
@@ -136,12 +168,50 @@ class WerkbankAction(ActionBase):
                 fn(*args)
             except Exception as err:
                 log.error(f"Werkbank: {type(self).__name__} failed: {err}")
-                self.show_error(duration=2)
+                self.ui(self.show_error, duration=2)
             finally:
                 self._busy.release()
         threading.Thread(target=run, daemon=True, name="werkbank").start()
 
+    def show_app_icon(self, spec: str) -> None:
+        """Put an app's icon (app id, icon name or path) on the key.
+
+        Resolved on the host, where the icon themes live; an image the user
+        picked in StreamController always wins.
+        """
+        if not spec or self.has_custom_user_asset():
+            return
+        cached = cached_path(spec)
+        if cached.is_file():  # the usual case: no host call, set right away
+            self.set_media(media_path=str(cached), size=0.7, valign=-0.3)
+            return
+
+        def run():
+            result = self.core("icon", spec)
+            if result.get("ok"):
+                self.ui(self.set_media, media_path=result["path"], size=0.7, valign=-0.3)
+            else:
+                log.warning(f"Werkbank: no icon found for {spec!r}")
+        threading.Thread(target=run, daemon=True, name="werkbank-icon").start()
+
+    def ui(self, fn, *args, **kwargs) -> None:
+        """Queue a key update; on_tick applies it on the deck's tick thread.
+
+        Updates made straight from our worker threads or via GLib.idle_add
+        did not reliably reach the key; official plugins (e.g. Clocks)
+        update from on_tick, so we do the same.
+        """
+        self._pending.append((fn, args, kwargs))
+
+    def on_tick(self):
+        while self._pending:
+            fn, args, kwargs = self._pending.popleft()
+            try:
+                fn(*args, **kwargs)
+            except Exception as err:
+                log.error(f"Werkbank: key update failed: {err}")
+
     def report(self, result: dict) -> None:
         if not result.get("ok"):
             log.error(f"Werkbank: {type(self).__name__}: {result.get('error') or result}")
-            self.show_error(duration=2)
+            self.ui(self.show_error, duration=2)

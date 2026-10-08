@@ -28,8 +28,19 @@ Plus, outside the plugin:
   without `kdotool` polling: one D-Bus call per window activation, title
   changes are ignored on purpose (terminals retitle constantly).
 - **`werkbank-cli`** – the core as a command line tool, usable from any
-  launcher: `windows`, `focus`, `desktop N`, `claude open|pin`, `api`, `note`.
-  Every command prints one JSON object.
+  launcher: `windows`, `focus`, `desktop N`, `claude open|pin`, `api`, `note`,
+  `icon`. Every command prints one JSON object.
+
+## Icons
+
+Every action has an *Icon* setting: an app id (`org.telegram.desktop`), an
+icon name from your theme (`media-record`) or a file. Left empty, *Focus or
+start app* guesses the app from its start command. Icons are looked up the
+way the desktop does it – the app's `.desktop` file, then your icon theme and
+its parents (KDE's config cascade included), then `pixmaps` – and rendered to
+PNG in `~/.cache/werkbank/icons`, where the sandboxed app can read them. The
+plugin ships no third-party logos. An image you pick in StreamController
+always wins.
 
 ## Install
 
@@ -79,6 +90,17 @@ which reports back via `callDBus` to a receiver the CLI owns for that one
 call. It never registers global shortcuts (that crashes KWin on Plasma 6.7).
 
 ## Development
+
+Notes for anyone hacking on it:
+
+- Pages created over D-Bus (`AddPage`) need `image-control-action`,
+  `background-control-action` and `label-control-actions` in each key state,
+  or StreamController discards what an action sets at runtime.
+- Key updates go through `on_ready` or a queue drained in `on_tick`; updates
+  from plugin threads did not reliably reach the key.
+- Many parallel `flatpak-spawn` calls make the sandbox's D-Bus proxy refuse
+  connections, hence the small pool and retry in `actions/base.py`.
+
 
 ```sh
 python3 -m unittest discover -s tests -t .

@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
-from werkbank import api, claude, notes
+from werkbank import api, claude, icons, notes
 
 NOW = datetime(2026, 10, 8, 14, 5, 9)
 
@@ -147,6 +147,46 @@ class ClaudeSessions(unittest.TestCase):
         self.assertEqual(claude.resolve("neu", self.workdir), (sid, False))
         self.assertEqual(json.loads((Path(self.tmp.name) / "state.json").read_text()),
                          {"neu": sid})
+
+
+class Icons(unittest.TestCase):
+    def test_desktop_file_then_theme_prefers_svg(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            share = Path(tmp)
+            (share / "applications").mkdir()
+            (share / "applications/org.example.App.desktop").write_text(
+                "[Desktop Entry]\nName=App\nIcon=example-app\nExec=app %U\n")
+            for rel in ("hicolor/48x48/apps/example-app.png",
+                        "hicolor/256x256/apps/example-app.png",
+                        "hicolor/scalable/apps/example-app.svg"):
+                f = share / "icons" / rel
+                f.parent.mkdir(parents=True, exist_ok=True)
+                f.write_text("x")
+            with mock.patch.object(icons, "data_dirs", return_value=[share]), \
+                    mock.patch.object(icons, "current_theme", return_value="hicolor"), \
+                    mock.patch.object(icons, "_icon_roots", return_value=[share / "icons"]):
+                self.assertEqual(icons.desktop_icon("org.example.App"), "example-app")
+                self.assertEqual(icons.find("org.example.App").name, "example-app.svg")
+                self.assertIsNone(icons.find("org.example.Missing"))
+
+    def test_cache_name_follows_file_changes(self):
+        with tempfile.NamedTemporaryFile(suffix=".png") as f:
+            before = icons.cached_path(f.name)
+            os.utime(f.name, (1, 1))
+            self.assertNotEqual(before, icons.cached_path(f.name))
+        self.assertEqual(icons.cached_path("org.example.App").name, "org.example.App-256.png")
+
+    def test_guess_from_launch_command(self):
+        # actions/ needs StreamController to import; the helper above the
+        # class does not, so run just that part of the file.
+        src = (Path(__file__).resolve().parent.parent / "actions/focus.py").read_text()
+        ns = {}
+        exec(src.split("class FocusApp")[0].replace("from .base import Field, WerkbankAction", ""), ns)
+        guess = ns["guess_icon"]
+        self.assertEqual(guess("flatpak run org.telegram.desktop"), "org.telegram.desktop")
+        self.assertEqual(guess("flatpak run --branch=stable us.zoom.Zoom"), "us.zoom.Zoom")
+        self.assertEqual(guess("/usr/bin/zettlr --foo"), "zettlr")
+        self.assertEqual(guess(""), "")
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ class NewNote(WerkbankAction):
               subtitle="leave empty for notes without a title, e.g. a daily journal"),
         Field("editor", "Open with", default="xdg-open"),
     ]
+    DEFAULT_ICON = "document-new"
 
     def on_key_down(self):
         if self.setting("template") and self.setting("directory"):
