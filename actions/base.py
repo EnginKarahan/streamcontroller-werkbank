@@ -80,6 +80,7 @@ class WerkbankAction(ActionBase):
         self.has_configuration = True
         self._busy = threading.Lock()
         self._pending = collections.deque()
+        self._visual: dict = {}  # last status text/color, re-applied in on_update
 
     # -- settings ---------------------------------------------------------
     def setting(self, key):
@@ -91,6 +92,24 @@ class WerkbankAction(ActionBase):
 
     def on_ready(self):
         self.show_app_icon(self.setting("icon") or self.default_icon())
+
+    def on_update(self):
+        """StreamController clears media and labels when it (re)loads a page and
+        then calls on_update; redraw icon, status text and color here."""
+        super().on_update()  # calls on_ready (icon)
+        if "text" in self._visual:
+            self.set_center_label(self._visual["text"], font_size=self._visual.get("size", 14))
+        if "color" in self._visual:
+            self.set_background_color(self._visual["color"])
+
+    def show_status(self, text: str | None = None, color: list | None = None, size: int = 14) -> None:
+        """Set (and remember) the status text and/or color. Call from on_tick or via ui()."""
+        if text is not None:
+            self._visual.update(text=text, size=size)
+            self.set_center_label(text, font_size=size)
+        if color is not None:
+            self._visual["color"] = color
+            self.set_background_color(color)
 
     def t(self, key: str, fallback: str) -> str:
         return self.plugin_base.locale_manager.get(key, fallback)

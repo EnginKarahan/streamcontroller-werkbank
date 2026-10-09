@@ -92,16 +92,14 @@ class ApiKey(WerkbankAction):
                 result = self.core(*args)
                 if not result.get("ok"):
                     self._matched = False
-                    self.ui(self.set_background_color, RED)
-                    self.ui(self.set_center_label, str(result.get("status") or "!"), font_size=14)
+                    self.ui(self.show_status, str(result.get("status") or "!"), RED)
                     return
                 text = result.get("text") or ""
                 log.debug(f"Werkbank: status {self.setting('status_url')} -> {text!r}")
-                self.ui(self.set_center_label, text, font_size=14)
+                self.ui(self.show_status, text)
                 pattern = self.setting("match")
                 self._matched = bool(pattern and re.search(pattern, text))
-                self.ui(self.set_background_color,
-                        (GREEN if self._matched else GREY) if pattern else NONE)
+                self.ui(self.show_status, None, (GREEN if self._matched else GREY) if pattern else NONE)
             finally:
                 self._polling.release()
         threading.Thread(target=run, daemon=True, name="werkbank-poll").start()

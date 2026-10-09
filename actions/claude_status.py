@@ -53,24 +53,9 @@ class _ClaudeKey(WerkbankAction):
     def on_tick(self):
         super().on_tick()
         view = self.view(SNAPSHOT.get(self))
-        # Compare with what the key really shows, not with what we last set:
-        # reloading the page (e.g. pressing the overview key while it is open)
-        # resets labels and colors, and a remembered value would never redraw.
-        if view != self._shown or not self._still_shown(view):
+        if view != self._shown:
             self._shown = view
-            text, color = view
-            self.set_center_label(text, font_size=13)
-            self.set_background_color(color)
-
-    def _still_shown(self, view) -> bool:
-        try:
-            state = self.get_state()
-            label = state.label_manager.action_labels.get("center")
-            shown_text = (getattr(label, "text", None) or "") if label else ""
-            shown_color = list(state.background_manager.action_color or [0, 0, 0, 0])
-        except AttributeError:  # internals changed: just redraw
-            return False
-        return shown_text == view[0] and shown_color == list(view[1])
+            self.show_status(view[0], view[1], size=13)
 
     def view(self, data: dict) -> tuple[str, list]:
         raise NotImplementedError
