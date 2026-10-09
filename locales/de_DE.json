@@ -46,5 +46,9 @@
     "field.on_text": "Text, solange es läuft",
     "field.off_text": "Text im Ruhezustand",
     "field.icon": "Icon (App-ID, Icon-Name oder Datei)",
-    "field.icon.hint": "aus deinem Icon-Theme, z. B. org.telegram.desktop oder media-record"
+    "field.icon.hint": "aus deinem Icon-Theme, z. B. org.telegram.desktop oder media-record",
+    "actions.ClaudeOverview.name": "Claude: Gesamtampel",
+    "actions.ClaudeSlot.name": "Claude: Sitzungsplatz",
+    "field.page": "Übersichtsseite",
+    "field.slot": "Platz-Nummer"
 }

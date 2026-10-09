@@ -18,6 +18,7 @@ Built and tested on Fedora 44, KDE Plasma 6 (Wayland), StreamController
 | **API call / status** | HTTP call on press (optionally long press only); polls a status URL and shows a value on the key, e.g. `{elapsed_minutes\|hm}`. Highlights when the text matches a regex; with a second URL the key becomes a toggle (clock in / clock out). |
 | **New note from template** | Copies a Markdown template (Zettlr, Obsidian, …), sets `id`, `date`, `title` in the front matter and the first `#` heading, asks for a title if wanted, opens the file. Never overwrites an existing note, so a daily-journal key simply reopens today's file. |
 | **Hold: press / release** | One command on key down, another on key up – push-to-talk. |
+| **Claude: status light / session slot** | One light for all Claude Code sessions (red = needs approval, yellow = waiting for you, green = working, grey = open but quiet) – meant as a sticky key – and one key per running session that brings its kitty window to the front. Needs the hook below. |
 | **Guarded start/stop** | For recordings: state from a status command (exit code 0 = running), start with a short press, stop **only** with a long press. No discard path. |
 
 Plus, outside the plugin:
@@ -25,11 +26,13 @@ Plus, outside the plugin:
 - **`kwin/werkbank-autopage`** – a KWin script that tells StreamController
   which window became active (`NotifyForegroundWindow` on its D-Bus API). This
   makes StreamController's per-app page switching work on Plasma Wayland
-  without `kdotool` polling: one D-Bus call per window activation, title
-  changes are ignored on purpose (terminals retitle constantly).
+  without `kdotool` polling: one D-Bus call per window activation and per
+  title change of the active window (so a browser tab with a web meeting can
+  get its own page); terminals are excluded from title tracking because they
+  retitle constantly.
 - **`werkbank-cli`** – the core as a command line tool, usable from any
-  launcher: `windows`, `focus`, `desktop N`, `claude open|pin`, `api`, `note`,
-  `icon`. Every command prints one JSON object.
+  launcher: `windows`, `focus`, `desktop N`, `claude open|pin|hook|status|focus`,
+  `api`, `note`, `icon`. Every command prints one JSON object.
 
 ## Icons
 
@@ -63,6 +66,21 @@ Requirements on the host: Python 3 with PyGObject (preinstalled on Plasma),
 KWin 6. For Claude sessions: kitty with remote control
 (`allow_remote_control socket-only`, `listen_on unix:@mykitty`). For title
 prompts: `kdialog` or `zenity`.
+
+## Claude Code status
+
+Add the hook to `~/.claude/settings.json` for the events `SessionStart`,
+`UserPromptSubmit`, `PostToolUse` (matcher `*`), `Notification`, `Stop` and
+`SessionEnd`:
+
+```json
+{"type": "command", "command": "/path/to/werkbank-cli claude hook", "timeout": 5}
+```
+
+The hook writes one small JSON per session to `~/.local/state/werkbank/claude/`
+(about 70 ms, silent, never fails a session). `werkbank-cli claude status`
+merges these with the claude processes it finds in kitty, so sessions that
+have been quiet since the hook was added show up too.
 
 ## Secrets
 

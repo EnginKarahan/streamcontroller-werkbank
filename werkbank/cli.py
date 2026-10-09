@@ -52,7 +52,18 @@ def cmd_icon(args) -> int:
 
 
 def cmd_claude(args) -> int:
-    from . import claude
+    from . import claude, claude_status
+    if args.action == "hook":
+        claude_status.hook()  # silent: Claude Code shows hook output to the user
+        return 0
+    if args.action == "status":
+        recs = claude_status.sessions(claude.pinned_names(), claude.claude_windows())
+        _out(ok=True, overall=claude_status.overall(recs), sessions=recs)
+        return 0
+    if args.action == "focus":
+        hit = claude.focus_pid(args.pid)
+        _out(ok=hit, result="focused" if hit else "not-found")
+        return 0 if hit else 1
     if args.action == "open":
         _out(ok=True, result=claude.open_session(args.name, args.directory))
     elif args.action == "pin":
@@ -120,6 +131,10 @@ def build_parser() -> argparse.ArgumentParser:
     c = csub.add_parser("open", help="focus the session window or reopen the session")
     c.add_argument("name")
     c.add_argument("directory")
+    csub.add_parser("hook", help="Claude Code hook: record session state (reads stdin)")
+    csub.add_parser("status", help="state of all running sessions (needs the hook)")
+    c = csub.add_parser("focus", help="focus the kitty window of a claude process")
+    c.add_argument("pid", type=int)
     c = csub.add_parser("pin", help="bind a key name to a session id")
     c.add_argument("name")
     c.add_argument("session")

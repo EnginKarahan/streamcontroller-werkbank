@@ -77,7 +77,7 @@ def request(url: str, method: str = "GET", body: dict | str | None = None,
     req = urllib.request.Request(url, data=data, method=method.upper(), headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
-            status, raw = resp.status, resp.read()
+            status, raw = resp.status or 200, resp.read()  # file:// has no HTTP status
     except urllib.error.HTTPError as err:
         status, raw = err.code, err.read()
     except (urllib.error.URLError, TimeoutError, OSError) as err:

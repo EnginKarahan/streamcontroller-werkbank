@@ -124,6 +124,63 @@ def find_window(session_id: str, directory: str | Path) -> tuple[int, int, str] 
     return fallback
 
 
+def claude_windows() -> list[dict]:
+    """Every kitty window whose foreground process is claude.
+
+    Returns {pid (of claude), kitty_pid, window_id, title, cwd}. Works without
+    hooks, so sessions that have been quiet since the hook was set up show too.
+    """
+    found = []
+    for kpid in _kitty_pids():
+        try:
+            proc = subprocess.run(
+                ["kitten", "@", "--to", KITTY_SOCKET.format(pid=kpid), "ls"],
+                capture_output=True, text=True, timeout=5, check=True)
+            os_windows = json.loads(proc.stdout)
+        except (subprocess.SubprocessError, json.JSONDecodeError, OSError):
+            continue
+        for osw in os_windows:
+            for tab in osw.get("tabs", []):
+                for win in tab.get("windows", []):
+                    for fp in win.get("foreground_processes") or []:
+                        cmd = fp.get("cmdline") or []
+                        if cmd and os.path.basename(cmd[0]) == "claude":
+                            found.append({"pid": fp.get("pid"), "kitty_pid": kpid,
+                                          "window_id": win["id"], "title": win.get("title", ""),
+                                          "cwd": win.get("cwd") or fp.get("cwd") or ""})
+                            break
+    return found
+
+
+def focus_pid(claude_pid: int) -> bool:
+    """Bring the kitty window that runs this claude process to the front."""
+    for pid in _kitty_pids():
+        try:
+            proc = subprocess.run(
+                ["kitten", "@", "--to", KITTY_SOCKET.format(pid=pid), "ls"],
+                capture_output=True, text=True, timeout=5, check=True)
+            os_windows = json.loads(proc.stdout)
+        except (subprocess.SubprocessError, json.JSONDecodeError, OSError):
+            continue
+        for osw in os_windows:
+            for tab in osw.get("tabs", []):
+                for win in tab.get("windows", []):
+                    pids = {p.get("pid") for p in win.get("foreground_processes") or []}
+                    if claude_pid in pids:
+                        subprocess.run(["kitten", "@", "--to", KITTY_SOCKET.format(pid=pid),
+                                        "focus-window", "--match", f"id:{win['id']}"],
+                                       capture_output=True, timeout=5)
+                        title = win.get("title", "")
+                        return bool(kwin.activate(cls="^kitty$", caption=re.escape(title), pid=pid)
+                                    or kwin.activate(pid=pid))
+    return False
+
+
+def pinned_names() -> dict[str, str]:
+    """Session id → key name, for sessions bound to a key."""
+    return {sid: name for name, sid in _load().items()}
+
+
 def open_session(name: str, directory: str | Path) -> str:
     """Focus the session's window or start it. Returns "focused" or "launched"."""
     directory = Path(directory).expanduser()

@@ -2,9 +2,9 @@
     "KPlugin": {
         "Id": "werkbank-autopage",
         "Name": "Werkbank Auto Page",
-        "Description": "Tells StreamController which window is active, so it can switch to that app's page.",
+        "Description": "Tells StreamController which window is active (and when its title changes), so it can switch to that app's page.",
         "License": "GPL-3.0",
-        "Version": "0.1.0",
+        "Version": "0.2.0",
         "EnabledByDefault": false
     },
     "X-Plasma-API": "javascript",

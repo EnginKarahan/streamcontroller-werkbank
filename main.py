@@ -10,6 +10,7 @@ sys.path.append(os.path.dirname(__file__))
 
 from .actions.api_key import ApiKey  # noqa: E402
 from .actions.claude_session import ClaudeSession  # noqa: E402
+from .actions.claude_status import ClaudeOverview, ClaudeSlot  # noqa: E402
 from .actions.focus import FocusApp  # noqa: E402
 from .actions.hold import HoldCommand  # noqa: E402
 from .actions.note import NewNote  # noqa: E402
@@ -28,6 +29,8 @@ ACTIONS = [
     (NewNote, "NewNote", "New note from template"),
     (HoldCommand, "HoldCommand", "Hold: press / release command"),
     (GuardedToggle, "GuardedToggle", "Guarded start/stop (recording)"),
+    (ClaudeOverview, "ClaudeOverview", "Claude: overall status light"),
+    (ClaudeSlot, "ClaudeSlot", "Claude: session slot"),
 ]
 
 
