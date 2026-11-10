@@ -1,0 +1,16 @@
+{
+    "generic": {
+        "copyright": "Copyright (C) 2026 Engin Karahan",
+        "original-url": "https://github.com/EnginKarahan/streamcontroller-werkbank",
+        "license": "GPL-3.0",
+        "license-url": "https://www.gnu.org/licenses/gpl-3.0.html",
+        "description": "Original work. The plugin ships no third-party icons or logos; key icons are rendered at runtime from the user's own icon theme."
+    },
+    "store/thumbnail.png": {
+        "copyright": "Copyright (C) 2026 Engin Karahan",
+        "original-url": "https://github.com/EnginKarahan/streamcontroller-werkbank",
+        "license": "GPL-3.0",
+        "license-url": "https://www.gnu.org/licenses/gpl-3.0.html",
+        "description": "Drawn by store/make_thumbnail.py; text set in Open Sans (SIL Open Font License 1.1)."
+    }
+}

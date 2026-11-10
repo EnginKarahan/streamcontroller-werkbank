@@ -1,17 +1,18 @@
 {
     "version": "0.1.0",
-    "thumbnail": "",
+    "thumbnail": "store/thumbnail.png",
     "id": "io_github_EnginKarahan_Werkbank",
     "name": "Werkbank",
+    "github": "https://github.com/EnginKarahan/streamcontroller-werkbank",
     "descriptions": {
-        "en_US": "Desktop workflow keys for KDE Plasma: focus or start apps, one key per Claude Code session, API calls with live status, notes from templates (Zettlr, Obsidian), push-to-talk and guarded recording toggles.",
-        "de_DE": "Tasten für Arbeitsabläufe unter KDE Plasma: Apps fokussieren oder starten, eine Taste je Claude-Code-Sitzung, API-Aufrufe mit Live-Status, Notizen aus Vorlagen (Zettlr, Obsidian), Push-to-Talk und geschützte Aufnahme-Schalter."
+        "en_US": "Desktop workflow keys for KDE Plasma: focus or start apps, one key per Claude Code session with a status light, API calls with live status, notes from templates (Zettlr, Obsidian), layout-aware shortcuts, countdown, do not disturb, push-to-talk and guarded recording toggles.",
+        "de_DE": "Tasten für Arbeitsabläufe unter KDE Plasma: Apps fokussieren oder starten, eine Taste je Claude-Code-Sitzung mit Statusampel, API-Aufrufe mit Live-Status, Notizen aus Vorlagen (Zettlr, Obsidian), layoutgerechte Tastenkürzel, Countdown, Nicht stören, Push-to-Talk und geschützte Aufnahme-Schalter."
     },
     "short-descriptions": {
         "en_US": "Workflow keys for KDE Plasma",
         "de_DE": "Arbeitsablauf-Tasten für KDE Plasma"
     },
-    "tags": ["Utility", "Productivity"],
+    "tags": ["Utility", "Productivity", "KDE"],
     "minimum-app-version": "1.5.0-beta.15",
     "app-version": "1.5.0-beta.16",
     "description": "Desktop workflow keys for KDE Plasma.",
