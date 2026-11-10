@@ -13,9 +13,15 @@ class HoldCommand(WerkbankAction):
     FIELDS = [
         Field("down", "Command on press"),
         Field("up", "Command on release"),
+        Field("hold_only", "Only on long press", kind="switch", default=False,
+              subtitle="run the press command only when the key is held; a short tap does nothing"),
     ]
 
     def event_callback(self, event, data=None):
+        if self.setting("hold_only"):
+            if event == Input.Key.Events.HOLD_START:
+                self.shell(self.setting("down"))
+            return
         if event == Input.Key.Events.DOWN:
             self.shell(self.setting("down"))
         elif event == Input.Key.Events.UP:

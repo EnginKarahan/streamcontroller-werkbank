@@ -2,13 +2,13 @@ from .base import Field, WerkbankAction
 
 
 class ClaudeSession(WerkbankAction):
-    """One key per Claude Code session: focus its kitty window or reopen it."""
+    """One key per Claude Code session: focus its terminal window or reopen it."""
 
     FIELDS = [
         Field("name", "Session name", subtitle="also the key's identity — keep it stable"),
         Field("directory", "Folder", subtitle="where the session runs, e.g. ~/projects/website"),
     ]
-    DEFAULT_ICON = "kitty"
+    DEFAULT_ICON = "utilities-terminal"
 
     def on_ready(self):
         super().on_ready()

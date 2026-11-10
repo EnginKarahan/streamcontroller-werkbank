@@ -44,7 +44,7 @@ SNAPSHOT = _Snapshot()
 
 
 class _ClaudeKey(WerkbankAction):
-    DEFAULT_ICON = "kitty"
+    DEFAULT_ICON = "utilities-terminal"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -80,10 +80,12 @@ class ClaudeOverview(_ClaudeKey):
     def on_key_down(self):
         page = self.setting("page") or "Claude"
         serial = self.deck_controller.serial_number()
+        # The top-level ChangePage looks the deck up on every call; the per-deck
+        # object's SetActivePage keeps a dead controller after the deck reconnects.
         subprocess.Popen(host([
             "gdbus", "call", "--session", "--dest", "com.core447.StreamController",
-            "--object-path", f"/com/core447/StreamController/controllers/{serial}",
-            "--method", "com.core447.StreamController.Controller.SetActivePage", page]),
+            "--object-path", "/com/core447/StreamController",
+            "--method", "com.core447.StreamController.ChangePage", serial, page]),
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
 
 

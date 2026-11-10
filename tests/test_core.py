@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
-from werkbank import api, claude, icons, notes
+from werkbank import api, claude, dnd, icons, keys, notes
 
 NOW = datetime(2026, 10, 8, 14, 5, 9)
 
@@ -187,6 +187,37 @@ class Icons(unittest.TestCase):
         self.assertEqual(guess("flatpak run --branch=stable us.zoom.Zoom"), "us.zoom.Zoom")
         self.assertEqual(guess("/usr/bin/zettlr --foo"), "zettlr")
         self.assertEqual(guess(""), "")
+
+
+class Keys(unittest.TestCase):
+    def test_translate_letters_and_punctuation_only(self):
+        self.assertEqual(keys.translate("ctrl+z"), "ctrl+x:z")
+        self.assertEqual(keys.translate("ctrl+alt+minus"), "ctrl+alt+x:minus")
+        self.assertEqual(keys.translate("ctrl+k f"), "ctrl+x:k x:f")
+        self.assertEqual(keys.translate("shift+pageup f11 ctrl+shift+k:13"),
+                         "shift+pageup f11 ctrl+shift+k:13")
+
+    def test_layout_from_kxkbrc(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "kxkbrc").write_text("[Layout]\nLayoutList=de,tr\nUse=true\n")
+            with mock.patch.dict(os.environ, {"XDG_CONFIG_HOME": tmp}, clear=False):
+                os.environ.pop("DOTOOL_XKB_LAYOUT", None)
+                self.assertEqual(keys.current_layout(), "de")
+
+
+class Dnd(unittest.TestCase):
+    def test_kconfig_date_roundtrip(self):
+        epoch = datetime(2026, 10, 9, 15, 22, 5).timestamp()
+        self.assertEqual(dnd.format_until(epoch), "2026,10,9,15,22,5")
+        self.assertAlmostEqual(dnd.parse("2026,10,9,15,22,5.812"), epoch + 0.812, places=3)
+        self.assertEqual(dnd.parse(""), 0.0)
+
+    def test_start_never_shortens(self):
+        later = __import__("time").time() + 3600
+        with mock.patch.object(dnd, "until", return_value=later), \
+                mock.patch.object(dnd.subprocess, "run") as run:
+            dnd.start(10)
+            run.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ starts or ends. The hook writes one small JSON file per session:
 
 with the state "working", "waiting" (turn finished, your move) or
 "permission" (a tool needs approval), the session's folder and the pid of
-its claude process, which ties the session to its kitty window.
+its claude process, which ties the session to its terminal window.
 
 The hook must be fast and must never fail the session, so it only uses the
 standard library and swallows its own errors.
@@ -116,7 +116,7 @@ def sessions(names: dict[str, str] | None = None, windows: list[dict] | None = N
     """All live sessions, sorted by name so every session keeps its key.
 
     `names` maps session ids to display names (pinned keys). `windows` are the
-    claude processes found in kitty (claude.claude_windows()); sessions among
+    claude processes found in terminals (claude.claude_windows()); sessions among
     them without a hook record are added as OPEN. Display name: pinned name,
     else the terminal title, else the folder. Files of dead sessions are removed.
     """
@@ -132,13 +132,15 @@ def sessions(names: dict[str, str] | None = None, windows: list[dict] | None = N
             path.unlink(missing_ok=True)
             continue
         win = by_pid.pop(rec.get("pid"), None)
-        rec["name"] = (names.get(rec["session_id"]) or (win and _title_name(win["title"]))
+        rec["name"] = (names.get(rec["session_id"])
+                       or (win and (win.get("name") or _title_name(win["title"])))
                        or Path(rec.get("cwd") or "?").name)
         out.append(rec)
     for pid, win in by_pid.items():
         out.append({"session_id": f"pid-{pid}", "state": OPEN, "cwd": win["cwd"], "message": "",
                     "pid": pid, "since": None,
-                    "name": _title_name(win["title"]) or Path(win["cwd"] or "?").name})
+                    "name": win.get("name") or _title_name(win["title"])
+                    or Path(win["cwd"] or "?").name})
     out.sort(key=lambda r: (r["name"].lower(), r["session_id"]))
     return out
 

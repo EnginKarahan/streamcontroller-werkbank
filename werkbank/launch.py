@@ -12,12 +12,13 @@ from . import kwin
 logger = logging.getLogger(__name__)
 
 
-def spawn(command: list[str] | str, cwd: str | None = None) -> None:
+def spawn(command: list[str] | str, cwd: str | None = None,
+          env: dict[str, str] | None = None) -> None:
     """Start a program detached from us, so it survives the caller."""
     argv = shlex.split(command) if isinstance(command, str) else command
     logger.info("starting %s", argv)
     subprocess.Popen(
-        argv, cwd=cwd, start_new_session=True,
+        argv, cwd=cwd, env=env, start_new_session=True,
         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
     )
 

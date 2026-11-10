@@ -50,5 +50,17 @@
     "actions.ClaudeOverview.name": "Claude: Gesamtampel",
     "actions.ClaudeSlot.name": "Claude: Sitzungsplatz",
     "field.page": "Übersichtsseite",
-    "field.slot": "Platz-Nummer"
+    "field.slot": "Platz-Nummer",
+    "actions.Shortcut.name": "Tastenkürzel (layoutgerecht)",
+    "actions.Countdown.name": "Countdown",
+    "actions.DoNotDisturb.name": "Nicht stören (KDE)",
+    "field.keys": "Tastenkürzel",
+    "field.keys.hint": "z. B. ctrl+z, ctrl+shift+t, f11, „ctrl+k f“ als Folge",
+    "field.text": "…oder Text tippen (optional)",
+    "field.enter": "Danach Enter drücken",
+    "field.minutes": "Minuten",
+    "field.warn": "Warnen in den letzten … Minuten",
+    "field.notify": "Benachrichtigung bei null",
+    "field.hold_only": "Nur bei langem Druck",
+    "field.hold_only.hint": "Befehl nur, wenn die Taste gehalten wird; kurzes Antippen tut nichts"
 }

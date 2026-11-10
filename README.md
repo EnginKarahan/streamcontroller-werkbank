@@ -14,12 +14,15 @@ Built and tested on Fedora 44, KDE Plasma 6 (Wayland), StreamController
 | Action | What it does |
 |---|---|
 | **Focus or start app** | Activates the first window whose class/title matches a regex; runs a start command if none does. Works on Wayland via a short-lived KWin script. |
-| **Claude Code session** | One key = one session. Focuses the kitty window that runs it, or opens kitty in the session folder and resumes it by id. On first use the key adopts the newest session of that folder. |
+| **Claude Code session** | One key = one session. Focuses the terminal tab that runs it, or opens Konsole in the session folder and resumes it by id. On first use the key adopts the newest session of that folder. |
 | **API call / status** | HTTP call on press (optionally long press only); polls a status URL and shows a value on the key, e.g. `{elapsed_minutes\|hm}`. Highlights when the text matches a regex; with a second URL the key becomes a toggle (clock in / clock out). |
 | **New note from template** | Copies a Markdown template (Zettlr, Obsidian, …), sets `id`, `date`, `title` in the front matter and the first `#` heading, asks for a title if wanted, opens the file. Never overwrites an existing note, so a daily-journal key simply reopens today's file. |
-| **Hold: press / release** | One command on key down, another on key up – push-to-talk. |
-| **Claude: status light / session slot** | One light for all Claude Code sessions (red = needs approval, yellow = waiting for you, green = working, grey = open but quiet) – meant as a sticky key – and one key per running session that brings its kitty window to the front. Needs the hook below. |
+| **Hold: press / release** | One command on key down, another on key up – push-to-talk. Option *Only on long press* for commands that should not fire by accident. |
+| **Claude: status light / session slot** | One light for all Claude Code sessions (red = needs approval, yellow = waiting for you, green = working, grey = open but quiet) – meant as a sticky key – and one key per running session that brings its terminal tab to the front. Needs the hook below. |
 | **Guarded start/stop** | For recordings: state from a status command (exit code 0 = running), start with a short press, stop **only** with a long press. No discard path. |
+| **Shortcut (layout-aware)** | Sends a shortcut such as `ctrl+z` or a sequence like `ctrl+k f` to the focused window, or types a text. Letters and punctuation go through the active keyboard layout, so `ctrl+z` stays Ctrl+Z on a German, French or Turkish keyboard. Needs `dotool`. |
+| **Countdown** | Talk timer, focus block, tea: short press starts or pauses, long press resets. Green while running, yellow in the last minutes, optional desktop notification at zero. |
+| **Do not disturb (KDE)** | Turns on Plasma's own *Do not disturb* for a number of minutes. Plasma ends it by itself, so a crash cannot leave notifications muted. |
 
 Plus, outside the plugin:
 
@@ -47,6 +50,8 @@ always wins.
 
 ## Install
 
+Install *Werkbank* from the plugin store in StreamController, or by hand:
+
 ```sh
 # 1. Plugin (Flatpak StreamController)
 git clone https://github.com/EnginKarahan/streamcontroller-werkbank \
@@ -63,9 +68,11 @@ Then set the window class (e.g. `org.kde.dolphin`) in a page's
 classes of all open windows.
 
 Requirements on the host: Python 3 with PyGObject (preinstalled on Plasma),
-KWin 6. For Claude sessions: kitty with remote control
+KWin 6. For Claude sessions: Konsole (found over D-Bus, nothing to set up);
+kitty also works if it has remote control enabled
 (`allow_remote_control socket-only`, `listen_on unix:@mykitty`). For title
-prompts: `kdialog` or `zenity`.
+prompts: `kdialog` or `zenity`. For *Shortcut*: [dotool](https://git.sr.ht/~geb/dotool)
+and write access to `/dev/uinput` (usually membership in the `input` group).
 
 ## Claude Code status
 
@@ -74,12 +81,15 @@ Add the hook to `~/.claude/settings.json` for the events `SessionStart`,
 `SessionEnd`:
 
 ```json
-{"type": "command", "command": "/path/to/werkbank-cli claude hook", "timeout": 5}
+{"type": "command", "command": "python3 $HOME/.var/app/com.core447.StreamController/data/plugins/io_github_EnginKarahan_Werkbank/werkbank-cli claude hook", "timeout": 5}
 ```
+
+Call it through `python3`: the store installs plugins from a ZIP archive, which
+drops the executable bit of `werkbank-cli`.
 
 The hook writes one small JSON per session to `~/.local/state/werkbank/claude/`
 (about 70 ms, silent, never fails a session). `werkbank-cli claude status`
-merges these with the claude processes it finds in kitty, so sessions that
+merges these with the claude processes it finds in terminals, so sessions that
 have been quiet since the hook was added show up too.
 
 ## Secrets
@@ -100,7 +110,7 @@ without scheme). The process environment wins over the file; set
 
 ## How it works
 
-StreamController runs sandboxed, where KWin, kitty and your programs are out
+StreamController runs sandboxed, where KWin, terminals and your programs are out
 of reach. Every action therefore calls `werkbank-cli` on the host through
 `flatpak-spawn --host` (with `--directory=$HOME`, since the sandbox cwd does
 not exist on the host). The CLI talks to KWin by loading a small script,
@@ -132,3 +142,6 @@ in `data/settings/settings.json`), then use
 ## License
 
 GPL-3.0, like StreamController.
+
+Werkbank is an independent project and not affiliated with Anthropic or KDE e.V.
+Claude and Claude Code are trademarks of Anthropic, PBC.

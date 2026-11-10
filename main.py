@@ -11,6 +11,9 @@ sys.path.append(os.path.dirname(__file__))
 from .actions.api_key import ApiKey  # noqa: E402
 from .actions.claude_session import ClaudeSession  # noqa: E402
 from .actions.claude_status import ClaudeOverview, ClaudeSlot  # noqa: E402
+from .actions.countdown import Countdown  # noqa: E402
+from .actions.dnd import DoNotDisturb  # noqa: E402
+from .actions.shortcut import Shortcut  # noqa: E402
 from .actions.focus import FocusApp  # noqa: E402
 from .actions.hold import HoldCommand  # noqa: E402
 from .actions.note import NewNote  # noqa: E402
@@ -31,6 +34,9 @@ ACTIONS = [
     (GuardedToggle, "GuardedToggle", "Guarded start/stop (recording)"),
     (ClaudeOverview, "ClaudeOverview", "Claude: overall status light"),
     (ClaudeSlot, "ClaudeSlot", "Claude: session slot"),
+    (Shortcut, "Shortcut", "Shortcut (layout-aware)"),
+    (Countdown, "Countdown", "Countdown"),
+    (DoNotDisturb, "DoNotDisturb", "Do not disturb (KDE)"),
 ]
 
 

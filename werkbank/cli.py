@@ -51,6 +51,29 @@ def cmd_icon(args) -> int:
     return 0 if path else 1
 
 
+def cmd_keys(args) -> int:
+    from . import keys
+    if args.type is not None:
+        keys.type_text(args.type, enter=args.enter)
+        _out(ok=True, typed=len(args.type))
+    else:
+        _out(ok=True, sent=keys.send(args.keys))
+    return 0
+
+
+def cmd_dnd(args) -> int:
+    from . import dnd
+    if args.action == "start":
+        left = dnd.start(args.minutes)
+    elif args.action == "stop":
+        dnd.stop()
+        left = 0
+    else:
+        left = dnd.remaining_minutes()
+    _out(ok=True, active=left > 0, minutes=left)
+    return 0
+
+
 def cmd_claude(args) -> int:
     from . import claude, claude_status
     if args.action == "hook":
@@ -126,14 +149,25 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--size", type=int, default=256)
     s.set_defaults(func=cmd_icon)
 
-    s = sub.add_parser("claude", help="one key per Claude Code session in kitty")
+    s = sub.add_parser("keys", help="send a shortcut (layout-correct) or type text, via dotool")
+    s.add_argument("keys", nargs="?", default="", help='e.g. "ctrl+z" or "ctrl+k f"')
+    s.add_argument("--type", help="type this text instead")
+    s.add_argument("--enter", action="store_true", help="press Enter after typing")
+    s.set_defaults(func=cmd_keys)
+
+    s = sub.add_parser("dnd", help="KDE Plasma do-not-disturb for N minutes")
+    s.add_argument("action", choices=["start", "stop", "status"])
+    s.add_argument("minutes", nargs="?", type=float, default=50)
+    s.set_defaults(func=cmd_dnd)
+
+    s = sub.add_parser("claude", help="one key per Claude Code session in a terminal")
     csub = s.add_subparsers(dest="action", required=True)
     c = csub.add_parser("open", help="focus the session window or reopen the session")
     c.add_argument("name")
     c.add_argument("directory")
     csub.add_parser("hook", help="Claude Code hook: record session state (reads stdin)")
     csub.add_parser("status", help="state of all running sessions (needs the hook)")
-    c = csub.add_parser("focus", help="focus the kitty window of a claude process")
+    c = csub.add_parser("focus", help="focus the terminal window of a claude process")
     c.add_argument("pid", type=int)
     c = csub.add_parser("pin", help="bind a key name to a session id")
     c.add_argument("name")

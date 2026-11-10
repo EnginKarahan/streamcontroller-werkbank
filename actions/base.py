@@ -1,7 +1,7 @@
 """Shared plumbing for all Werkbank actions.
 
 The real work happens in the `werkbank` core, called through werkbank-cli on
-the host. StreamController usually runs as a Flatpak, where KWin, kitty and
+the host. StreamController usually runs as a Flatpak, where KWin, terminals and
 the user's programs are out of reach; flatpak-spawn --host bridges that.
 """
 
